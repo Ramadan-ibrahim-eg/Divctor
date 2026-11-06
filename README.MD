@@ -56,7 +56,6 @@ Full documentation is available at **[docs.divct.workers.dev](https://docs.divct
 |--------|----------|-------------|
 | `GET` | `/chart` | Generate an SVG chart |
 | `POST` | `/graph` | Generate an SVG flowchart |
-| `GET` | `/health` | Health check |
 
 **Base URL:** `https://api.divct.workers.dev`
 
