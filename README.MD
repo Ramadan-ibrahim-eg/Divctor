@@ -1,3 +1,4 @@
+![Divctor Logo](logo.png)
 
 # Divctor
 
