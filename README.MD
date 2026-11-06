@@ -99,5 +99,3 @@ The API itself is provided as a service. You are granted a limited, non-exclusiv
 - **Website:** [www.divct.workers.dev](https://www.divct.workers.dev)
 - **Docs:** [docs.divct.workers.dev](https://docs.divct.workers.dev)
 - **QR Generator:** [qr.divct.workers.dev](https://qr.divct.workers.dev)
-
-**تحب نعمل حاجة تانية؟** ولا **نرتاح (لأنك خلصت كل حاجة)**؟
