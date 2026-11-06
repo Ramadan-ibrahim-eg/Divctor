@@ -1,0 +1,380 @@
+
+openapi: 3.0.3
+info:
+  title: Divctor API
+  description: |
+    Divctor provides SVG charts and flowcharts via a simple HTTP API.
+    All endpoints return SVG images that work in <img> tags, emails, and anywhere SVGs are supported.
+  version: 1.0.0
+  contact:
+    name: Divctor Support
+    url: https://www.divct.workers.dev/contact
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.divct.workers.dev
+    description: Production Server
+
+tags:
+  - name: Charts
+    description: Generate SVG charts (8 types)
+  - name: Graphs
+    description: Generate SVG flowcharts
+  - name: Health
+    description: Service health check
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /chart:
+    get:
+      tags:
+        - Charts
+      summary: Generate an SVG chart
+      description: |
+        Generate an SVG chart. All customization parameters are optional.
+        Returns an SVG image that can be embedded in HTML, emails, or any SVG-compatible context.
+      operationId: generateChart
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: true
+          description: Chart type
+          schema:
+            type: string
+            enum: [bar, line, pie, area, stacked-bar, donut, scatter, radar]
+        - name: data
+          in: query
+          required: true
+          description: |
+            Comma-separated values (max 100). For scatter charts, use a JSON array of {"x":..., "y":...} objects.
+          schema:
+            type: string
+            example: "10,20,30"
+        - name: data2
+          in: query
+          required: false
+          description: Second dataset (for grouped/stacked charts)
+          schema:
+            type: string
+            example: "30,40,35,50"
+        - name: data3
+          in: query
+          required: false
+          description: Third dataset (for grouped/stacked charts)
+          schema:
+            type: string
+            example: "20,25,18,30"
+        - name: data4
+          in: query
+          required: false
+          description: Fourth dataset
+          schema:
+            type: string
+        - name: data5
+          in: query
+          required: false
+          description: Fifth dataset
+          schema:
+            type: string
+        - name: labels
+          in: query
+          required: false
+          description: Comma-separated labels
+          schema:
+            type: string
+            example: "Q1,Q2,Q3,Q4"
+        - name: title
+          in: query
+          required: false
+          description: Chart title
+          schema:
+            type: string
+        - name: pointStyle
+          in: query
+          required: false
+          description: Point style for line/scatter/radar charts
+          schema:
+            type: string
+            enum: [circle, square, star, emoji, none]
+            default: circle
+        - name: pointEmoji
+          in: query
+          required: false
+          description: Emoji to use when pointStyle=emoji
+          schema:
+            type: string
+            default: "●"
+        - name: pointSize
+          in: query
+          required: false
+          description: Point size in pixels (2-10)
+          schema:
+            type: integer
+            minimum: 2
+            maximum: 10
+            default: 4
+        - name: borderRadius
+          in: query
+          required: false
+          description: Corner rounding for the chart area (0-32)
+          schema:
+            type: integer
+            minimum: 0
+            maximum: 32
+            default: 0
+        - name: lineWidth
+          in: query
+          required: false
+          description: Stroke width for lines (1-5)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 5
+            default: 2
+        - name: bgStyle
+          in: query
+          required: false
+          description: Background effect
+          schema:
+            type: string
+            enum: [none, dots, grid, snow]
+            default: none
+        - name: showValues
+          in: query
+          required: false
+          description: Show/hide data values on chart
+          schema:
+            type: boolean
+            default: true
+        - name: customCSS
+          in: query
+          required: false
+          description: Custom CSS injected into the SVG (use with caution)
+          schema:
+            type: string
+        - name: save
+          in: query
+          required: false
+          description: Save the chart and get a permanent URL (returns JSON instead of SVG)
+          schema:
+            type: boolean
+            default: false
+        - name: expiryDays
+          in: query
+          required: false
+          description: Expiry duration for saved charts (30 or 60 days). Any other value defaults to 30.
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: SVG image (or JSON if save=true)
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                  url:
+                    type: string
+                  expires_at:
+                    type: string
+                  expires_in_days:
+                    type: integer
+        '400':
+          description: Invalid parameters
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Domain not allowed or invalid signature
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited or quota exceeded
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /graph:
+    post:
+      tags:
+        - Graphs
+      summary: Generate an SVG flowchart
+      description: Generate an SVG flowchart by sending nodes and links as JSON.
+      operationId: generateGraph
+      security:
+        - ApiKeyAuth: []
+      parameters:
+        - name: apikey
+          in: query
+          required: true
+          description: Your API key
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphRequest'
+      responses:
+        '200':
+          description: SVG flowchart
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid nodes or links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited or quota exceeded
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the service status.
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: apikey
+      description: |
+        Your API key. You can also pass it via the Authorization header (Bearer token).
+
+  schemas:
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: Machine-readable error code (e.g., UNAUTHORIZED, RATE_LIMITED)
+        docs:
+          type: string
+          description: Link to documentation
+        dashboard:
+          type: string
+          description: Link to dashboard
+
+    GraphRequest:
+      type: object
+      required:
+        - nodes
+        - links
+      properties:
+        nodes:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - id
+              - label
+            properties:
+              id:
+                type: string
+                description: Unique node ID
+              label:
+                type: string
+                description: Display label
+        links:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - source
+              - target
+            properties:
+              source:
+                type: string
+                description: Source node ID
+              target:
+                type: string
+                description: Target node ID
+        options:
+          type: object
+          properties:
+            nodeColor:
+              type: string
+              description: Node fill color (hex, e.g., #1e293b)
+            strokeColor:
+              type: string
+              description: Border color (hex)
+            textColor:
+              type: string
+              description: Text color (hex)
+            bgColor:
+              type: string
+              description: Background color (hex)
