@@ -1,4 +1,5 @@
 ```markdown
+![Logo](logo.png)
 # Divctor
 
 **Simple, fast, and developer-friendly SVG Charts & QR Codes API.**
