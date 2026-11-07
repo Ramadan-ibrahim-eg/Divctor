@@ -74,8 +74,7 @@ Divctor is currently in **Beta**. All new users get **7,000 free points per day*
 
 - **Runtime:** Cloudflare Workers
 - **Database:** Cloudflare D1
-- **API Spec:** OpenAPI 3.0
-
+- **API Spec:** [OpenAPI 3.0](openapi.yaml)
 ---
 
 ## 📄 License
