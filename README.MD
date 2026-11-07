@@ -1,3 +1,4 @@
+```markdown
 # Divctor
 
 **Simple, fast, and developer-friendly SVG Charts & QR Codes API.**
@@ -63,9 +64,9 @@ Full documentation is available at **[docs.divct.workers.dev](https://docs.divct
 
 ## 🆓 Free Tier & Beta
 
-Divctor is currently in **Beta**. All new users get **30,000 free points** until **January 31, 2027**. No credit card required.
+Divctor is currently in **Beta**. All new users get **7,000 free points per day** for **30 days**. After 30 days, you automatically downgrade to **Free** (1,000 points/day). Beta cannot be re-activated.
 
-1 point = 1 data point. A chart with 10 values consumes 10 points.
+1 point = 1 data point. A chart with 10 values consumes 10 points. Points reset daily.
 
 ---
 
@@ -99,3 +100,4 @@ The API itself is provided as a service. You are granted a limited, non-exclusiv
 - **Website:** [www.divct.workers.dev](https://www.divct.workers.dev)
 - **Docs:** [docs.divct.workers.dev](https://docs.divct.workers.dev)
 - **QR Generator:** [qr.divct.workers.dev](https://qr.divct.workers.dev)
+```
