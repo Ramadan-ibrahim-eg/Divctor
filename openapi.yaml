@@ -1,0 +1,828 @@
+
+openapi: 3.0.3
+info:
+  title: Divctor API
+  description: |
+    Divctor provides SVG charts and flowcharts via an HTTP API.
+    Chart, flowchart, and saved-item endpoints return SVG images that work in <img> tags, PDFs, static sites, and documentation.
+    The info and health endpoints, save=true responses, and all errors return JSON.
+    Authentication is via API key (query parameter or Bearer token).
+  version: 1.0.0
+  contact:
+    name: Divctor Support
+    url: https://www.divct.workers.dev/contact
+  license:
+    name: Proprietary
+
+servers:
+  - url: https://api.divct.workers.dev
+    description: Production Server
+
+tags:
+  - name: Charts
+    description: Generate SVG charts (8 types)
+  - name: Graphs
+    description: Generate SVG flowcharts
+  - name: Saved Charts
+    description: Save, retrieve, and delete SVG charts and flowcharts
+  - name: Health
+    description: Service health check
+  - name: Info
+    description: API information
+
+security:
+  - ApiKeyAuth: []
+
+paths:
+  /:
+    get:
+      tags:
+        - Info
+      summary: API information
+      description: Returns basic information about the API and its endpoints.
+      operationId: getApiInfo
+      security: []
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: Divctor API
+                  version:
+                    type: string
+                    example: 1.0.0
+                  description:
+                    type: string
+                  docs:
+                    type: string
+                  website:
+                    type: string
+                  endpoints:
+                    type: object
+                    properties:
+                      chart:
+                        type: string
+                      graph:
+                        type: string
+                      health:
+                        type: string
+                      saved:
+                        type: string
+
+  /chart:
+    get:
+      tags:
+        - Charts
+      summary: Generate an SVG chart
+      description: |
+        Generate an SVG chart. All customization parameters are optional.
+        Returns an SVG image that can be embedded in HTML, PDFs, static sites, or any SVG-compatible context.
+        If save=true, returns JSON with a URL that stays valid until expires_at (30 or 60 days) instead of SVG.
+      operationId: generateChart
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          required: false
+          description: Chart type. Defaults to bar.
+          schema:
+            type: string
+            enum: [bar, line, pie, area, stacked-bar, donut, scatter, radar]
+            default: bar
+        - name: data
+          in: query
+          required: true
+          description: |
+            Comma-separated values (max 100 per dataset). For scatter charts, use a JSON array of {"x":..., "y":...} objects.
+          schema:
+            type: string
+            example: "10,20,30"
+        - name: data2
+          in: query
+          required: false
+          description: Second dataset (for grouped/stacked charts). Not allowed for pie and donut (INVALID_DATA). For bar and stacked-bar every group needs the same number of values.
+          schema:
+            type: string
+            example: "30,40,35,50"
+        - name: data3
+          in: query
+          required: false
+          description: Third dataset (for grouped/stacked charts)
+          schema:
+            type: string
+            example: "20,25,18,30"
+        - name: data4
+          in: query
+          required: false
+          description: Fourth dataset (for grouped/stacked charts)
+          schema:
+            type: string
+            example: "15,20,25,30"
+        - name: data5
+          in: query
+          required: false
+          description: Fifth dataset (for grouped/stacked charts)
+          schema:
+            type: string
+            example: "5,10,15,20"
+        - name: names
+          in: query
+          required: false
+          description: |
+            Comma-separated names for the groups, in the order data, data2 to data5.
+            Used in the legend. A group without a name is shown as "Series 1", "Series 2" and so on.
+            At most as many names as groups, each up to 60 characters; a name cannot contain a comma.
+            Not allowed for pie and donut, where the labels parameter names the slices.
+          schema:
+            type: string
+            example: "Sales,Costs,Profit"
+        - name: legend
+          in: query
+          required: false
+          description: |
+            Legend with a colored square and name for each group. If you leave this parameter out, the legend
+            appears automatically when the chart has two or more groups (and for pie and donut when labels are given).
+            legend=true shows it even for a single group. legend=false hides it. Any other value returns INVALID_DATA.
+            A visible legend adds a strip under the chart, so the image is taller (about 38 px for one row).
+            The legend never changes the points used.
+          schema:
+            type: boolean
+        - name: labels
+          in: query
+          required: false
+          description: Comma-separated labels. For pie and donut they name the slices (shown in the legend). Radar needs at least 3 labels, one per axis, and every group needs exactly one value per label.
+          schema:
+            type: string
+            example: "Q1,Q2,Q3,Q4"
+        - name: title
+          in: query
+          required: false
+          description: Chart title
+          schema:
+            type: string
+        - name: pointStyle
+          in: query
+          required: false
+          description: Point style for line/scatter/radar charts. Unrecognized values render as circle.
+          schema:
+            type: string
+            enum: [circle, square, star, emoji, none]
+            default: circle
+        - name: pointEmoji
+          in: query
+          required: false
+          description: Emoji to use when pointStyle=emoji
+          schema:
+            type: string
+            default: "●"
+        - name: pointSize
+          in: query
+          required: false
+          description: Point size in pixels. Recommended 2-10; the value is applied as provided.
+          schema:
+            type: integer
+            default: 4
+        - name: borderRadius
+          in: query
+          required: false
+          description: Corner rounding for the chart area in pixels. Recommended 0-32; the value is applied as provided.
+          schema:
+            type: integer
+            default: 0
+        - name: lineWidth
+          in: query
+          required: false
+          description: Stroke width for lines. Recommended 1-5; the value is applied as provided.
+          schema:
+            type: integer
+            default: 2
+        - name: bgStyle
+          in: query
+          required: false
+          description: Background effect. Unrecognized values render no effect.
+          schema:
+            type: string
+            enum: [none, dots, grid, snow]
+            default: none
+        - name: showValues
+          in: query
+          required: false
+          description: Show/hide data values on chart
+          schema:
+            type: boolean
+            default: true
+        - name: customCSS
+          in: query
+          required: false
+          description: |
+            Custom CSS injected into the SVG. Sanitized: </style>, <script>, javascript:, and expression() are removed.
+          schema:
+            type: string
+        - name: save
+          in: query
+          required: false
+          description: Save the chart and get a URL valid until expires_at (returns JSON instead of SVG)
+          schema:
+            type: boolean
+            default: false
+        - name: expiryDays
+          in: query
+          required: false
+          description: Expiry duration for saved charts (30 or 60 days). Use 30 or 60; any other value is treated as 30.
+          schema:
+            type: integer
+            default: 30
+      responses:
+        '200':
+          description: SVG image. With save=true, a JSON object (still 200) with a clean saved-SVG URL that needs no key or generation parameters, plus its expiry.
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                  url:
+                    type: string
+                  expires_at:
+                    type: string
+                  expires_in_days:
+                    type: integer
+        '400':
+          description: Invalid parameters, or the API key was sent in the query and the Authorization header with different values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Domain or request origin not allowed (including a demo key used from another site), invalid signature, or account suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited or quota exceeded
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal error while generating or saving
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Charts
+      summary: Generate an SVG chart from a JSON body
+      description: |
+        The same chart endpoint as GET, with the options sent as a JSON body instead of the URL.
+        GET and POST give the same result, use the same validation, the same points and the same errors.
+        Use POST when the data, labels, names or CSS are too long for a URL.
+        Send the API key in the Authorization header or the apikey query parameter (not in the body).
+        Body fields have the same names as the GET parameters. A list can be sent as a JSON array or as the same comma-separated text GET uses.
+        Fields that are not in the list are ignored, as in GET. A field sent in both the URL and the body with different values returns INVALID_DATA.
+        The body must be JSON (Content-Type: application/json) and at most 200000 characters.
+        If save=true, returns JSON with a URL that stays valid until expires_at (30 or 60 days) instead of SVG.
+      operationId: generateChartPost
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: save
+          in: query
+          required: false
+          description: Same as the save field of the body. Either place works.
+          schema:
+            type: boolean
+            default: false
+        - name: expiryDays
+          in: query
+          required: false
+          description: Same as the expiryDays field of the body. Use 30 or 60; any other value is treated as 30.
+          schema:
+            type: integer
+            default: 30
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ChartRequest'
+      responses:
+        '200':
+          description: SVG image. With save=true, a JSON object (still 200) with a clean saved-SVG URL that needs no key or generation parameters, plus its expiry.
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                  url:
+                    type: string
+                  expires_at:
+                    type: string
+                  expires_in_days:
+                    type: integer
+        '400':
+          description: Invalid parameters, or the API key was sent in the query and the Authorization header with different values
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Domain or request origin not allowed (including a demo key used from another site), invalid signature, or account suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited or quota exceeded
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal error while generating or saving
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /graph:
+    post:
+      tags:
+        - Graphs
+      summary: Generate an SVG flowchart
+      description: |
+        Generate an SVG flowchart by sending nodes and links as JSON.
+        If save=true, returns JSON with a URL that stays valid until expires_at (30 or 60 days) instead of SVG.
+      operationId: generateGraph
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: save
+          in: query
+          required: false
+          description: Save the flowchart and get a URL valid until expires_at (returns JSON instead of SVG)
+          schema:
+            type: boolean
+            default: false
+        - name: expiryDays
+          in: query
+          required: false
+          description: Expiry duration for saved flowcharts (30 or 60 days). Use 30 or 60; any other value is treated as 30.
+          schema:
+            type: integer
+            default: 30
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/GraphRequest'
+      responses:
+        '200':
+          description: SVG flowchart. With save=true, a JSON object (still 200) with a clean saved-SVG URL that needs no key or generation parameters, plus its expiry.
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+            application/json:
+              schema:
+                type: object
+                properties:
+                  saved:
+                    type: boolean
+                  url:
+                    type: string
+                  expires_at:
+                    type: string
+                  expires_in_days:
+                    type: integer
+        '400':
+          description: Invalid nodes or links
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Domain or request origin not allowed (including a demo key used from another site), invalid signature, or account suspended
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '429':
+          description: Rate limited or quota exceeded
+          headers:
+            Retry-After:
+              description: Number of seconds to wait before retrying
+              schema:
+                type: integer
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Internal error while generating or saving
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /saved/{id}:
+    get:
+      tags:
+        - Saved Charts
+      summary: Retrieve a saved chart or flowchart
+      description: Retrieve a previously saved chart or flowchart by its UUID. Returns the SVG image. No authentication required.
+      operationId: getSavedChart
+      security: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Chart/flowchart UUID (from save=true response)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: SVG image
+          content:
+            image/svg+xml:
+              schema:
+                type: string
+                format: binary
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Chart not found or expired
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags:
+        - Saved Charts
+      summary: Delete a saved chart or flowchart
+      description: |
+        Delete a saved chart or flowchart by its UUID.
+        The requesting API key must own the saved item (matching user_email).
+      operationId: deleteSavedChart
+      security:
+        - ApiKeyAuth: []
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          description: Chart/flowchart UUID (from save=true response)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Chart deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  deleted:
+                    type: boolean
+                    example: true
+                  id:
+                    type: string
+                    format: uuid
+        '400':
+          description: Invalid UUID format
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Missing or invalid API key
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Cannot delete without an account (e.g., demo key)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Chart not found or not owned by you
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check
+      description: Returns the service status.
+      operationId: healthCheck
+      security: []
+      responses:
+        '200':
+          description: Service is healthy
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  service:
+                    type: string
+                    example: api.divct
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: query
+      name: apikey
+      description: |
+        Your API key. Pass it as a query parameter (e.g., ?apikey=YOUR_KEY).
+        Prefer the Authorization header (BearerAuth) when you can, because URLs with keys can appear in logs.
+    BearerAuth:
+      type: http
+      scheme: bearer
+      description: |
+        Your API key passed as a Bearer token in the Authorization header
+        (e.g., Authorization: Bearer YOUR_KEY).
+
+  schemas:
+    Error:
+      type: object
+      required:
+        - error
+        - code
+      example:
+        error: Max 100 data points
+        code: INVALID_DATA
+        docs: https://docs.divct.workers.dev
+        dashboard: https://www.divct.workers.dev
+      properties:
+        error:
+          type: string
+          description: Error message
+        code:
+          type: string
+          description: |
+            Machine-readable error code. Possible values:
+            INVALID_DATA, INVALID_TYPE, UNAUTHORIZED, DOMAIN_NOT_ALLOWED,
+            INVALID_SIGNATURE, FORBIDDEN, ACCOUNT_SUSPENDED,
+            NOT_FOUND, RATE_LIMITED, QUOTA_EXCEEDED, INTERNAL_ERROR, SERVICE_UNAVAILABLE.
+        docs:
+          type: string
+          description: Link to documentation
+        dashboard:
+          type: string
+          description: Link to dashboard
+
+    ChartRequest:
+      type: object
+      description: The same options as the GET /chart parameters, sent as JSON.
+      required:
+        - data
+      properties:
+        type:
+          type: string
+          enum: [bar, line, pie, area, stacked-bar, donut, scatter, radar]
+          default: bar
+        data:
+          description: Values (max 100). An array of numbers, the same comma-separated text as GET, or for scatter an array of {x, y} objects.
+          oneOf:
+            - type: array
+              items:
+                type: number
+              example: [10, 20, 30]
+            - type: array
+              items:
+                type: object
+                properties:
+                  x:
+                    type: number
+                  y:
+                    type: number
+            - type: string
+              example: "10,20,30"
+        data2:
+          description: Second dataset, same rules as the GET data2 parameter.
+          oneOf:
+            - type: array
+              items:
+                type: number
+            - type: string
+        data3:
+          description: Third dataset.
+          oneOf:
+            - type: array
+              items:
+                type: number
+            - type: string
+        data4:
+          description: Fourth dataset.
+          oneOf:
+            - type: array
+              items:
+                type: number
+            - type: string
+        data5:
+          description: Fifth dataset.
+          oneOf:
+            - type: array
+              items:
+                type: number
+            - type: string
+        names:
+          description: Group names, in the order data, data2 to data5. An array of strings or comma-separated text. A name cannot contain a comma. Same rules as GET.
+          oneOf:
+            - type: array
+              items:
+                type: string
+              example: ["Sales", "Costs"]
+            - type: string
+        labels:
+          description: Labels. An array of strings or comma-separated text. A label cannot contain a comma. Same rules as GET.
+          oneOf:
+            - type: array
+              items:
+                type: string
+              example: ["Q1", "Q2", "Q3", "Q4"]
+            - type: string
+        title:
+          type: string
+        legend:
+          type: boolean
+          description: Omit for automatic. true shows the legend, false hides it. Any other value returns INVALID_DATA.
+        showValues:
+          type: boolean
+          default: true
+        pointStyle:
+          type: string
+          enum: [circle, square, star, emoji, none]
+          default: circle
+        pointEmoji:
+          type: string
+          default: "●"
+        pointSize:
+          type: integer
+          default: 4
+        borderRadius:
+          type: integer
+          default: 0
+        lineWidth:
+          type: integer
+          default: 2
+        bgStyle:
+          type: string
+          enum: [none, dots, grid, snow]
+          default: none
+        customCSS:
+          type: string
+        save:
+          type: boolean
+          default: false
+        expiryDays:
+          type: integer
+          default: 30
+
+    GraphRequest:
+      type: object
+      required:
+        - nodes
+        - links
+      properties:
+        nodes:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required:
+              - id
+            properties:
+              id:
+                type: string
+                description: Node ID, referenced by links. Use unique IDs; duplicates are not rejected by the server.
+              label:
+                type: string
+                description: Display label. Defaults to the node id when omitted.
+        links:
+          type: array
+          maxItems: 100
+          items:
+            type: object
+            required:
+              - source
+              - target
+            properties:
+              source:
+                type: string
+                description: Source node ID. Must match a node id, otherwise the request fails with 400.
+              target:
+                type: string
+                description: Target node ID. Must match a node id, otherwise the request fails with 400.
+              color:
+                type: string
+                description: Link color (hex, e.g., #38bdf8)
+        options:
+          type: object
+          description: Optional styling and layout options
+          properties:
+            nodeColor:
+              type: string
+              description: Node fill color (hex, e.g., #1e293b)
+              default: "#1e293b"
+            strokeColor:
+              type: string
+              description: Border color (hex)
+              default: "#38bdf8"
+            textColor:
+              type: string
+              description: Text color (hex)
+              default: "#f8fafc"
+            bgColor:
+              type: string
+              description: Background color (hex)
+              default: "#0f172a"
+            nodeWidth:
+              type: integer
+              description: Node width in pixels
+              default: 160
+            nodeHeight:
+              type: integer
+              description: Node height in pixels
+              default: 60
+            hGap:
+              type: integer
+              description: Horizontal gap between nodes in pixels
+              default: 60
+            vGap:
+              type: integer
+              description: Vertical gap between layers in pixels
+              default: 80
+            maxNodesPerLayer:
+              type: integer
+              description: Maximum number of nodes per layer
+              default: 4
