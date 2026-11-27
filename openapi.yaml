@@ -7,12 +7,17 @@ info:
     Chart, flowchart, and saved-item endpoints return SVG images that work in <img> tags, PDFs, static sites, and documentation.
     The info and health endpoints, save=true responses, and all errors return JSON.
     Authentication is via API key (query parameter or Bearer token).
+ AI assistants that support MCP (Model Context Protocol) can draw through Divctor without an API key via the MCP endpoint: https://divctor-mcp.divct.workers.dev/mcp (anonymous use shares a daily point pool and a per-IP rate limit; see the MCP page in the docs).
   version: 1.0.0
   contact:
     name: Divctor Support
     url: https://www.divct.workers.dev/contact
   license:
     name: Proprietary
+
+externalDocs:
+  description: MCP server for AI assistants (no API key, shared daily quota)
+  url: https://docs.divct.workers.dev/docs/mcp
 
 servers:
   - url: https://api.divct.workers.dev
