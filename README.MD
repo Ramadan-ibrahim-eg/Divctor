@@ -147,7 +147,7 @@ claude mcp add --transport http divctor https://divctor-mcp.divct.workers.dev/mc
 
 Tools: `generate_chart` (all 8 chart types; saves and returns a shareable link by default, `save=false` returns the raw SVG), `generate_graph` (flowcharts, same save behavior), `generate_qr` (QR as SVG, free), `list_chart_types` (the types and their data rules, free).
 
-Anonymous use is free and shares one pool of 7,000 points per day across all MCP users (1 point per data value, 1 per flowchart node), plus 30 requests per minute per IP. When the pool is used, calls return 429 until 00:00 Cairo time. For a dedicated quota, use the HTTP API with your own key.
+Anonymous use is free: no points are deducted from any account, and generated charts carry the Divctor watermark (like the Free plan). Each client IP can send up to 30 requests per minute; over the limit, calls return 429. For your own quota or no watermark, use the HTTP API with your own key.
 
 ## Authentication
 
