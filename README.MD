@@ -147,7 +147,7 @@ claude mcp add --transport http divctor https://divctor-mcp.divct.workers.dev/mc
 
 Tools: `generate_chart` (all 8 chart types; saves and returns a shareable link by default, `save=false` returns the raw SVG), `generate_graph` (flowcharts, same save behavior), `generate_qr` (QR as SVG, free), `list_chart_types` (the types and their data rules, free).
 
-Anonymous use is free: no points are deducted from any account, and generated charts carry the Divctor watermark (like the Free plan). Each client IP can send up to 30 requests per minute; over the limit, calls return 429. For your own quota or no watermark, use the HTTP API with your own key.
+Anonymous use is free: no points are deducted from any account, and generated charts carry the Divctor watermark (like the Free plan). Each client IP can send up to 30 requests per minute; over the limit, calls return 429. To draw on your own account instead, pass your API key in the optional `api_key` argument of `generate_chart` or `generate_graph`; the call then follows your plan's points and rules, exactly like a direct API call.
 
 ## Authentication
 
