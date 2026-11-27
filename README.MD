@@ -13,6 +13,7 @@ Runs on Cloudflare Workers. The output is plain SVG, which you can use in `<img>
 | Interactive API reference | https://docs.divct.workers.dev/swagger |
 | OpenAPI spec | https://docs.divct.workers.dev/openapi.yaml |
 | QR generator | https://qr.divct.workers.dev |
+| MCP endpoint (for AI assistants) | https://divctor-mcp.divct.workers.dev/mcp |
 
 ## Quick start
 
@@ -128,6 +129,25 @@ curl "https://qr.divct.workers.dev/qr?text=Hello&size=400&ecc=M&style=classic" -
 | `GET /qr-info` | Metadata (version, modules, density, ecc) |
 
 Parameters: `text` (required, max 1000 characters), `size` (100 to 1000, default 400), `ecc` (`L`, `M`, `Q`, `H`; default `M`), `fg`, `bg` (hex), `style` (`classic`, `rounded`, `dots`, `smooth`, `modern`), `border` (0 to 10), `borderRadius` (0 to 100).
+
+
+## MCP server (for AI assistants)
+
+Divctor has an MCP (Model Context Protocol) endpoint. AI assistants that support MCP can draw charts, flowcharts and QR codes through it, without an API key.
+
+```
+https://divctor-mcp.divct.workers.dev/mcp
+```
+
+Streamable HTTP transport. Example for Claude Code:
+
+```bash
+claude mcp add --transport http divctor https://divctor-mcp.divct.workers.dev/mcp
+```
+
+Tools: `generate_chart` (all 8 chart types; saves and returns a shareable link by default, `save=false` returns the raw SVG), `generate_graph` (flowcharts, same save behavior), `generate_qr` (QR as SVG, free), `list_chart_types` (the types and their data rules, free).
+
+Anonymous use is free and shares one pool of 7,000 points per day across all MCP users (1 point per data value, 1 per flowchart node), plus 30 requests per minute per IP. When the pool is used, calls return 429 until 00:00 Cairo time. For a dedicated quota, use the HTTP API with your own key.
 
 ## Authentication
 
